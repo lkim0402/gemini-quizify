@@ -12,8 +12,9 @@ The Dynamic Quiz Generator is an AI-powered application designed to create perso
 - User-Friendly Interface: Built with Streamlit for a seamless user experience.
 
 ### Technologies Used
-ChromaDB: For efficient document storage and retrieval.
-LangChain: To manage and process natural language queries.
-Google Cloud Platform (GCP): Hosting and machine learning services.
-Vertex AI: AI model management and deployment.
-Streamlit: For building interactive web applications.
+- ChromaDB: For efficient document storage and retrieval.
+- LangChain: To manage and process natural language queries.
+- Google Cloud Platform (GCP): Hosting and machine learning services.
+- Vertex AI: AI model management and deployment.
+- Streamlit: For building interactive web applications.
+- Pydantic: For parsing question objects.
