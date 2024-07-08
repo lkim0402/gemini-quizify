@@ -179,7 +179,8 @@ class QuizManager:
         Task: Initialize the QuizManager class with a list of quiz questions.
 
         Overview:
-        This task involves setting up the `QuizManager` class by initializing it with a list of quiz question objects. Each quiz question object is a dictionary that includes the question text, multiple choice options, the correct answer, and an explanation. The initialization process should prepare the class for managing these quiz questions, including tracking the total number of questions.
+        This task involves setting up the `QuizManager` class by initializing it with a list of quiz question objects. 
+        Each quiz question object is a dictionary that includes the question text, multiple choice options, the correct answer, and an explanation. The initialization process should prepare the class for managing these quiz questions, including tracking the total number of questions.
 
         Instructions:
         1. Store the provided list of quiz question objects in an instance variable named `questions`.

@@ -57,6 +57,16 @@ class ChromaCollectionCreator:
         # Use a TextSplitter from Langchain to split the documents into smaller text chunks
         # https://python.langchain.com/docs/modules/data_connection/document_transformers/character_text_splitter
         # [Your code here for splitting documents]
+        text_splitter = CharacterTextSplitter(
+            separator="\n\n",
+            chunk_size=512,
+            chunk_overlap=100,
+            length_function=len,
+            is_separator_regex=False,
+        )
+
+        aux_array = list(map(lambda page: page.page_content, self.processor.pages))
+        texts = text_splitter.create_documents(aux_array)
         
         if texts is not None:
             st.success(f"Successfully split pages to {len(texts)} documents!", icon="✅")
@@ -66,6 +76,13 @@ class ChromaCollectionCreator:
         # Create a Chroma in-memory client using the text chunks and the embeddings model
         # [Your code here for creating Chroma collection]
         
+        # self.db = Chroma.from_documents(documents=texts, embedding=self.embed_model)
+        
+        self.db = Chroma.from_documents(
+            texts, 
+            self.embed_model.client, 
+            persist_directory="./chroma_db")
+
         if self.db:
             st.success("Successfully created Chroma Collection!", icon="✅")
         else:
@@ -93,7 +110,7 @@ if __name__ == "__main__":
     
     embed_config = {
         "model_name": "textembedding-gecko@003",
-        "project": "YOUR PROJECT ID HERE",
+        "project": "gemini-quizzify-427807",
         "location": "us-central1"
     }
     
