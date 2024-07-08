@@ -1,6 +1,6 @@
 # Dynamic Quiz Generator
 An AI-driven platform that dynamically generates quizzes from user-provided documents, offering tailored learning experiences with instant feedback and comprehensive explanations. Built using ChromaDB, LangChain, GCP & Vertex AI, and Streamlit.
-
+This is a project done as an intern at Radical AI.
 ### Introduction
 The Dynamic Quiz Generator is an AI-powered application designed to create personalized quizzes from documents provided by users. Leveraging advanced machine learning and natural language processing techniques, the platform provides immediate feedback and in-depth explanations to enhance learning and retention.
 
