@@ -7,7 +7,7 @@ Quizify AI is an AI-based application for generating quizzes from user-provided 
 - [Installation](#installation)
 - [Usage](#usage)
 - [Project Structure](#project-structure)
-- [Contributing](#contributing)
+- [Modules](#modules)
 - [License](#license)
 
 ## Features
@@ -17,9 +17,7 @@ Quizify AI is an AI-based application for generating quizzes from user-provided 
 - Generate quizzes based on the content of the documents.
 - Manage quizzes and track the total number of questions.
 
-
-
-### Technologies Used
+##### Technologies Used
 - ChromaDB: For efficient document storage and retrieval.
 - LangChain: To manage and process natural language queries.
 - Google Cloud Platform (GCP): Hosting and machine learning services.
@@ -51,8 +49,6 @@ Quizify AI is an AI-based application for generating quizzes from user-provided 
 
 ## Project Structure:
 ```css 
-gemini-quizify/
-│
 gemini-quizify/
 ├── DocumentProcessor.py
 ├── EmbeddingClient.py
