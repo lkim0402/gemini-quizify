@@ -63,19 +63,36 @@ gemini-quizify/
 ## Modules
 
 ### DocumentProcessor.py
-- Processes uploaded PDF documents to extract text content.
+- Processes uploaded PDF documents to ingest text content using LangChain's PyPDFLoader. Processes the uploaded PDF files, extract their pages, and get the total number of extracted pages.
+- For each uploaded PDF file, it generates a unique identifier and appends it to the original file name before saving to avoid name conflict.
 
 ### EmbeddingClient.py
-- Converts the processed text into embeddings using VertexAI.
+- Converts the processed text into embeddings using VertexAIEmbeddings API from GCP.
+- Functions include `embed_query` to retrieve embeddings for the given query, and `embed_documents` to retrieve embeddings for multiple documents.
+
 
 ### ChromaCollectionCreator.py
-- Stores embeddings in ChromaDB for efficient retrieval.
+- Stores embeddings in ChromaDB for efficient retrieval. Utilizes the DocumentProcessor class and the EmbeddingClient class. 
+- Functions include
+    - `create_chroma_collection`: Creates a ChromaDB collection from the documents processed by the DocumentProcessor
+    - `query_chroma_collection`: Queries the created chroma collection for documents similar to the query. Returns the first matching document from the collection with similarity score.
 
 ### QuizGenerator.py
 - Generates quiz questions based on the content of the documents and provided topic.
+- Utilized Pydantic's BaseModel to create a schema for the question object.
+- The functions of the QuizGenerator class include
+    - `init_llm`: Initializes and configures the Large Language Model (LLM) for generating quiz questions. Utilized `VertexAI` from `langchain_google_vertexai`.
+    - `generate_question_with_vectorstore`: Generates a quiz question based on the topic provided and context using a vectorstore
+    - `validate_question`: Validates a quiz question for uniqueness within the generated quiz
+    - `generate_quiz`: Generates a list of unique quiz questions based on the specified topic and number of questions.
+        - Utilizes the `generate_question_with_vectorstore` method to generate each question and the `validate_question` method to ensure its uniqueness before adding it to the quiz.
+        - Returns a list of dictionaries, where each dictionary represents a unique quiz question
 
 ### QuizManager.py
 - Manages quiz questions, including tracking the total number of questions.
+- Functions include
+    - `get_question_at_index`: Retrieves the quiz question object at the specified index
+    - `next_question_index`: Adjusts the current quiz question index based on the specified direction
 
 ### main.py
 - Ties everything together, providing the main entry point for the Streamlit application.
