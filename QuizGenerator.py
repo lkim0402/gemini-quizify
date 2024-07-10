@@ -3,9 +3,9 @@ import os
 import sys
 import json
 sys.path.append(os.path.abspath('../../'))
-from tasks.task_3.task_3 import DocumentProcessor
-from tasks.task_4.task_4 import EmbeddingClient
-from tasks.task_5.task_5 import ChromaCollectionCreator
+from DocumentProcessor import DocumentProcessor
+from EmbeddingClient import EmbeddingClient
+from ChromaCollectionCreator import ChromaCollectionCreator
 
 from langchain_core.prompts import PromptTemplate
 from langchain_google_vertexai import VertexAI
@@ -14,6 +14,8 @@ from langchain_core.output_parsers import JsonOutputParser
 from pydantic import BaseModel, Field
 from typing import List
 
+
+# Creating a schema for the question object
 class Choice(BaseModel):
     key: str = Field(description="The key for the choice, should be one of 'A', 'B', 'C', or 'D'.")
     value: str = Field(description="The text of the choice.")
@@ -42,16 +44,17 @@ class QuestionSchema(BaseModel):
         }
       }
 
+# Building the QuizGenerator class
 class QuizGenerator:
     def __init__(self, topic=None, num_questions=1, vectorstore=None):
         """
-        Initializes the QuizGenerator with a required topic, the number of questions for the quiz,
-        and an optional vectorstore for querying related information.
+        Initializes the QuizGenerator with a required topic, the number of questions, and an optional vectorstore for querying related information.
 
         :param topic: A string representing the required topic of the quiz.
         :param num_questions: An integer representing the number of questions to generate for the quiz, up to a maximum of 10.
         :param vectorstore: An optional vectorstore instance (e.g., ChromaDB) to be used for querying information related to the quiz topic.
         """
+        
         if not topic:
             self.topic = "General Knowledge"
         else:
@@ -59,12 +62,17 @@ class QuizGenerator:
 
         if num_questions > 10:
             raise ValueError("Number of questions cannot exceed 10.")
+        
         self.num_questions = num_questions
-
         self.vectorstore = vectorstore
         self.llm = None
+        
+        # Initialize the JsonOutputParser with the QuestionSchema
+        # JsonOutputParser: a utility class used to parse JSON output from a language model (LLM) and ensure that the output conforms to a specific schema
         self.parser = JsonOutputParser(pydantic_object=QuestionSchema)
-        self.question_bank = [] # Initialize the question bank to store questions
+        
+        # Initialize the question bank to store questions
+        self.question_bank = [] 
         self.system_template = """
             You are a subject matter expert on the topic: {topic}
             
@@ -96,7 +104,11 @@ class QuizGenerator:
 
     def generate_question_with_vectorstore(self):
         """
-        Generates a quiz question based on the topic provided using a vectorstore
+        Generates a quiz question based on the topic provided and context using a vectorstore
+
+        Overview:
+        This method leverages the vectorstore to retrieve relevant context for the quiz topic, then utilizes the LLM to generate a structured quiz question in JSON format. 
+        The process involves retrieving documents, creating a prompt, and invoking the LLM to generate a question.
 
         :return: A JSON object representing the generated quiz question.
         """
@@ -107,7 +119,7 @@ class QuizGenerator:
         
         from langchain_core.runnables import RunnablePassthrough, RunnableParallel
 
-        # Enable a Retriever
+        # Enable a Retriever: get relevant documents from the vectorstore
         retriever = self.vectorstore.db.as_retriever()
         
         # Use the system template to create a PromptTemplate
@@ -122,44 +134,78 @@ class QuizGenerator:
         setup_and_retrieval = RunnableParallel(
             {"context": retriever, "topic": RunnablePassthrough()}
         )
-        # Create a chain with the Retriever, PromptTemplate, and LLM
+        # Creating a chain with the Retriever, PromptTemplate, and LLM
         chain = setup_and_retrieval | prompt | self.llm | self.parser
-
-        # Invoke the chain with the topic as input
+        """
+        The chain is constructed as follows:
+            1. setup_and_retrieval: Retrieves relevant documents from the vectorstore and passes them to the next step.
+            2. prompt: Creates a prompt template using the system template and the retrieved documents.
+            3. self.llm: Generates the quiz question based on the formatted prompt.
+            4. self.parser: Parses the output from the LLM to ensure it conforms to the QuestionSchema.
+        Output: A validated and structured quiz question in JSON format.
+        """
         response = chain.invoke(self.topic)
         return response
 
+
+    def validate_question(self, question: dict) -> bool:
+        """
+        Validates a quiz question for uniqueness within the generated quiz.
+        Checks if the provided question (as a dictionary) is unique based on its text content compared to previously generated questions stored in `question_bank`. 
+        The goal is to ensure that no duplicate questions are added to the quiz.
+
+        Parameters:
+        - question: A dictionary representing the generated quiz question, expected to contain at least a "question" key.
+
+        Returns:
+        - A boolean value: True if the question is unique, False otherwise.
+
+        Note: This method assumes `question` is a valid dictionary and `question_bank` has been properly initialized.
+        """
+        # Consider missing 'question' key as invalid in the dict object
+        if 'question' not in question or not question['question']:
+            raise ValueError("The dict object must contain a non-empty 'question' key")
+
+        # Check if a question with the same text already exists in the self.question_bank
+        is_unique = True
+
+        # Iterating over the existing questions in `question_bank` and compare their texts to the current question's text
+        for question_iterated in self.question_bank:
+            if(question_iterated['question'] == question['question']):
+                is_unique = False
+                break
+
+        return is_unique
+    
+    
     def generate_quiz(self) -> list:
         """
-        Task: Generate a list of unique quiz questions based on the specified topic and number of questions.
-
-        This method orchestrates the quiz generation process by utilizing the `generate_question_with_vectorstore` method to generate each question and the `validate_question` method to ensure its uniqueness before adding it to the quiz.
-
-        Steps:
-            1. Initialize an empty list to store the unique quiz questions.
-            2. Loop through the desired number of questions (`num_questions`), generating each question via `generate_question_with_vectorstore`.
-            3. For each generated question, validate its uniqueness using `validate_question`.
-            4. If the question is unique, add it to the quiz; if not, attempt to generate a new question (consider implementing a retry limit).
-            5. Return the compiled list of unique quiz questions.
+        Generates a list of unique quiz questions based on the specified topic and number of questions.
+        Utilizes the `generate_question_with_vectorstore` method to generate each question and the `validate_question` method to ensure its uniqueness before adding it to the quiz.
 
         Returns:
         - A list of dictionaries, where each dictionary represents a unique quiz question generated based on the topic.
 
-        Note: This method relies on `generate_question_with_vectorstore` for question generation and `validate_question` for ensuring question uniqueness. Ensure `question_bank` is properly initialized and managed.
+        Note: This method relies on `generate_question_with_vectorstore` for question generation and `validate_question` for ensuring question uniqueness. 
+        Ensure `question_bank` is properly initialized and managed.
         """
-        self.question_bank = [] # Reset the question bank
+        
+        # Initializing an empty list to store the unique quiz questions
+        self.question_bank = [] # Resetting the question bank
 
         for _ in range(self.num_questions):
-            # ##### YOUR CODE HERE #####
+            # Generating a question
             question = self.generate_question_with_vectorstore()
-            # # Validate the question using the validate_question method
+            
+            # Validatig the question's uniqueness using the validate_question method
             if self.validate_question(question):
                 print("Successfully generated unique question")
-                # Add the valid and unique question to the bank
+                # If valid and unique, add it to the bank
                 self.question_bank.append(question)
+                
             else:
                 print("Duplicate or invalid question detected.")
-            ##### YOUR CODE HERE #####
+
                 for i in range(3): #Retry limit of 3 attempts
                     question_str = self.generate_question_with_vectorstore()
                     
@@ -179,45 +225,6 @@ class QuizGenerator:
 
         return self.question_bank
 
-    def validate_question(self, question: dict) -> bool:
-        """
-        Task: Validate a quiz question for uniqueness within the generated quiz.
-
-        This method checks if the provided question (as a dictionary) is unique based on its text content compared to previously generated questions stored in `question_bank`. The goal is to ensure that no duplicate questions are added to the quiz.
-
-        Steps:
-            1. Extract the question text from the provided dictionary.
-            2. Iterate over the existing questions in `question_bank` and compare their texts to the current question's text.
-            3. If a duplicate is found, return False to indicate the question is not unique.
-            4. If no duplicates are found, return True, indicating the question is unique and can be added to the quiz.
-
-        Parameters:
-        - question: A dictionary representing the generated quiz question, expected to contain at least a "question" key.
-
-        Returns:
-        - A boolean value: True if the question is unique, False otherwise.
-
-        Note: This method assumes `question` is a valid dictionary and `question_bank` has been properly initialized.
-        """
-        ##### YOUR CODE HERE #####
-        # Consider missing 'question' key as invalid in the dict object
-
-
-        if 'question' not in question or not question['question']:
-            raise ValueError("The dict object must contain a non-empty 'question' key")
-
-        # Check if a question with the same text already exists in the self.question_bank
-
-        is_unique = True
-
-        for question_iterated in self.question_bank:
-            if(question_iterated['question'] == question['question']):
-                is_unique = False
-                break
-
-        ##### YOUR CODE HERE #####
-        return is_unique
-
 
 # Test Generating the Quiz
 if __name__ == "__main__":
@@ -234,7 +241,7 @@ if __name__ == "__main__":
         processor = DocumentProcessor()
         processor.ingest_documents()
     
-        embed_client = EmbeddingClient(**embed_config) # Initialize from Task 4
+        embed_client = EmbeddingClient(**embed_config) 
     
         chroma_creator = ChromaCollectionCreator(processor, embed_client)
     
