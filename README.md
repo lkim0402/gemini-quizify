@@ -2,6 +2,9 @@
 
 Quizify AI is an AI-based application for generating quizzes from user-provided PDF documents. This project leverages Google Cloud's VertexAI API, LangChain, and ChromaDB to process documents, create embeddings, and generate quizzes.
 
+![Example Image](flowchart_gemini_quizify.drawio.png)
+
+
 ## Table of Contents
 - [Features](#features)
 - [Installation](#installation)
